@@ -13,19 +13,16 @@ using Amazon;
 using Finexus.IO.Config;
 using Finexus.Aws.Utilities;
 using Amazon.DynamoDBv2.DocumentModel;
+using Cryptokuma.Marketing.IO.Models;
+using Amazon.Lambda;
+using Amazon.Lambda.Model;
+using System.IO;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
 namespace Cryptokuma.Marketing.IO
 {
-    public class Contact {
-        public string Email { get; set; }
-        public string LastName { get; set; }
-        public string FirstName { get; set; }
-        public string CookieStack { get; set; }
-    }
-
     public class Functions
     {
         private const string TAG = "FunctionHandler";
@@ -34,6 +31,11 @@ namespace Cryptokuma.Marketing.IO
         private string _awsAccessKey;
         private string _awsSecretKey;
         protected const string REGION = "us-east-1";
+
+        private string SEND_CONFIRMATION_LAMBDA_NAME = "";
+        private string CONTACT_FROM = "info@cryptokuma.com";
+        private string CONFIRMATION_SUBJECT = "";
+        private string CONFIRMATION_MESSAGE = "";
 
         /// <summary>
         /// Default constructor that Lambda will invoke.
@@ -57,6 +59,21 @@ namespace Cryptokuma.Marketing.IO
             {
                 // load AWS credentials
                 LoadConfig();
+
+                // load environment variables
+                if (String.IsNullOrEmpty(SEND_CONFIRMATION_LAMBDA_NAME))
+                {
+                    var sendConfirmationLambda = System.Environment.GetEnvironmentVariable("SEND_CONFIRMATION_LAMBDA_NAME");
+                    if (String.IsNullOrEmpty(sendConfirmationLambda))
+                    {
+                        throw new NullReferenceException("SEND_CONFIRMATION_LAMBDA_NAME environment variable is not defined");
+                    }
+
+                    SEND_CONFIRMATION_LAMBDA_NAME = sendConfirmationLambda;
+
+                    _logger.Debug($"SEND_CONFIRMATION_LAMBDA_NAME: {SEND_CONFIRMATION_LAMBDA_NAME}");
+
+                }
 
                 var contactRequest = JsonConvert.DeserializeObject<Contact>(request.Body);
 
@@ -83,7 +100,37 @@ namespace Cryptokuma.Marketing.IO
                     // insert row
                     var putResult = await ddbTable.PutItemAsync(contactRow, config);
 
-                    return ApiGateway.GetResponseAsText($"OK {contactRequest.Email}", HttpStatusCode.OK);
+                    // send email confirmation
+                    using (var lambdaClient = new AmazonLambdaClient(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
+                    {
+                        // init Lambda request
+                        var sendMessageRequest = new InvokeRequest()
+                        {
+                            FunctionName = SEND_CONFIRMATION_LAMBDA_NAME,
+                            InvocationType = InvocationType.Event,
+                            Payload = request.Body
+                        };
+
+                        // invoke Lambda
+                        var sendMessageResult = await lambdaClient.InvokeAsync(sendMessageRequest);
+#if DEBUG
+                        // DEBUG Worker response
+                        string sendMessageRawResult;
+                        using (var sr = new StreamReader(sendMessageResult.Payload))
+                        {
+                            sendMessageRawResult = sr.ReadToEnd();
+                        }
+#endif
+                        // get Worker response
+                        if (!sendMessageResult.HttpStatusCode.Equals(HttpStatusCode.Accepted))
+                        {
+                            _logger.Log($"ERROR: {sendMessageResult.FunctionError}");
+
+                            return ApiGateway.GetResponseAsText($"ERROR {contactRequest.Email}", HttpStatusCode.BadRequest);
+                        }
+
+                        return ApiGateway.GetResponseAsText($"OK {contactRequest.Email}", HttpStatusCode.OK);
+                    }
                 }
             }
             catch (Exception ex)
@@ -104,14 +151,25 @@ namespace Cryptokuma.Marketing.IO
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public APIGatewayProxyResponse SendConfirmation(APIGatewayProxyRequest request, ILambdaContext context)
+        public async Task<string> SendConfirmationAsync(Contact contact)
         {
-            var logTag = "ProcessContactFormAsync";
+            var logTag = "SendConfirmation";
             _logger.Log("BEGIN", logTag);
 
             try
             {
-                
+                LoadConfirmationEnvironmentVars();
+
+                var mailGunApi = new MailGunApi();
+                var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMATION_SUBJECT, CONFIRMATION_MESSAGE);
+                if (result.IsSuccessStatusCode)
+                {
+                    return "OK";
+                }
+                else
+                {
+                    return "ERROR";
+                }
             }
             catch (Exception ex)
             {
@@ -123,6 +181,50 @@ namespace Cryptokuma.Marketing.IO
                 // Lambda error response
                 return ApiGateway.GetResponseAsText(ex.Message, HttpStatusCode.BadRequest);
 #endif
+            }
+        }
+
+        private void LoadConfirmationEnvironmentVars()
+        {
+            // load environment variables
+            if (String.IsNullOrEmpty(CONTACT_FROM))
+            {
+                var contactFrom = System.Environment.GetEnvironmentVariable("CONTACT_FROM");
+                if (String.IsNullOrEmpty(contactFrom))
+                {
+                    throw new NullReferenceException("CONTACT_FROM environment variable is not defined");
+                }
+
+                CONTACT_FROM = contactFrom;
+
+                _logger.Debug($"CONTACT_FROM: {CONTACT_FROM}");
+
+            }
+
+            if (String.IsNullOrEmpty(CONFIRMATION_SUBJECT))
+            {
+                var confirmSubject = System.Environment.GetEnvironmentVariable("CONFIRMATION_SUBJECT");
+                if (String.IsNullOrEmpty(confirmSubject))
+                {
+                    throw new NullReferenceException("CONFIRMATION_SUBJECT environment variable is not defined");
+                }
+
+                CONFIRMATION_SUBJECT = confirmSubject;
+
+                _logger.Debug($"CONFIRMATION_SUBJECT: {CONFIRMATION_SUBJECT}");
+            }
+
+            if (String.IsNullOrEmpty(CONFIRMATION_MESSAGE))
+            {
+                var confirmMessage = System.Environment.GetEnvironmentVariable("CONFIRMATION_MESSAGE");
+                if (String.IsNullOrEmpty(confirmMessage))
+                {
+                    throw new NullReferenceException("CONFIRMATION_MESSAGE environment variable is not defined");
+                }
+
+                CONFIRMATION_MESSAGE = confirmMessage;
+
+                _logger.Debug($"CONFIRMATION_MESSAGE: {CONFIRMATION_MESSAGE}");
             }
         }
 

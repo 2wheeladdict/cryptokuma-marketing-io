@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cryptokuma-marketing-io", "cryptokuma-marketing-io\cryptokuma-marketing-io.csproj", "{382559E7-5077-43F8-9616-7EDD1D18CA3B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cryptokuma-marketing-io.Tests", "cryptokuma-marketing.Tests\cryptokuma-marketing-io.Tests.csproj", "{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cryptokuma-marketing-io.Tests", "cryptokuma-marketing-io.Tests\cryptokuma-marketing-io.Tests.csproj", "{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "finexus-aws-utilities", "..\finexus-aws-utilities\finexus-aws-utilities.csproj", "{CD161B62-2F9B-4185-9376-316049C8DE7B}"
 EndProject

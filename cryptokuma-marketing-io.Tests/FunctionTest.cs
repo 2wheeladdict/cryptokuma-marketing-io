@@ -9,6 +9,7 @@ using Amazon.Lambda.TestUtilities;
 using Amazon.Lambda.APIGatewayEvents;
 
 using Cryptokuma.Marketing.IO;
+using Cryptokuma.Marketing.IO.Models;
 
 namespace Cryptokuma.Marketing.IO.Tests
 {
@@ -21,6 +22,9 @@ namespace Cryptokuma.Marketing.IO.Tests
         {
             _lambda = new Functions();
             _context = new TestLambdaContext();
+
+            System.Environment.SetEnvironmentVariable("CONFIRMATION_SUBJECT", "Thanks!");
+            System.Environment.SetEnvironmentVariable("CONFIRMATION_MESSAGE", "Got it...BOOM");
         }
 
         [Fact]
@@ -42,6 +46,21 @@ namespace Cryptokuma.Marketing.IO.Tests
             };
 
             var response = _lambda.ProcessContactFormAsync(request, _context).Result;
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void SendConfirmation()
+        {
+            var contact = new Contact
+            {
+                CookieStack = "Monster",
+                Email = "fcbenoit@gmail.com",
+                FirstName = "Clay",
+                LastName = "Bob"
+            };
+
+            var response = _lambda.SendConfirmationAsync(contact).Result;
             Assert.NotNull(response);
         }
     }

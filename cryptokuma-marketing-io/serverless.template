@@ -131,9 +131,16 @@
 	"SendConfirmation" : {
       "Type" : "AWS::Serverless::Function",
       "Properties": {
-        "Handler": "cryptokuma-marketing-io::Cryptokuma.Marketing.IO.Functions::SendConfirmation",
+        "Handler": "cryptokuma-marketing-io::Cryptokuma.Marketing.IO.Functions::SendConfirmationAsync",
         "Runtime": "dotnetcore1.0",
         "CodeUri": "",
+		"Environment": {
+			"Variables": {
+				"CONTACT_FROM": "info@cryptokuma.com",
+				"CONFIRMATION_SUBJECT": "Thanks for your interest in CryptoKuma!",
+				"CONFIRMATION_MESSAGE": "We will be in touch soon."
+			}
+		},
         "MemorySize": 256,
         "Timeout": 30,
         "Role": null,
