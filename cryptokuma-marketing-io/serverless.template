@@ -1,0 +1,320 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Transform" : "AWS::Serverless-2016-10-31",
+  "Description" : "CryptoKuma Contact Form Serverless Application.",
+
+  "Resources" : {
+
+    "ApiInvokeRole": {
+        "Description": "Allow API Gateway to Invoke Lambda functions",
+        "Properties": {
+            "AssumeRolePolicyDocument": {
+                "Statement": [
+                    {
+                        "Action": [
+                            "sts:AssumeRole"
+                        ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [
+                                "apigateway.amazonaws.com"
+                            ]
+                        }
+                    }
+                ],
+                "Version": "2012-10-17"
+            },
+            "Policies": [
+                {
+                    "PolicyDocument": {
+                        "Statement": [
+                            {
+                                "Action": [
+                                    "logs:*"
+                                ],
+                                "Effect": "Allow",
+                                "Resource": "arn:aws:logs:::*"
+                            },
+                            {
+                                "Action": "lambda:InvokeFunction",
+                                "Effect": "Allow",
+                                "Resource": "*"
+                            }
+                        ]
+                    },
+                    "PolicyName": "api-gateway-lambda-invoke"
+                }
+            ]
+        },
+        "Type": "AWS::IAM::Role"
+    },
+
+	"ProcessContactFormRole": {
+		"Type": "AWS::IAM::Role",
+        "Properties": {
+			"AssumeRolePolicyDocument": {
+                "Statement": [
+                    {
+                        "Action": [
+                            "sts:AssumeRole"
+                        ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        }
+                    }
+                ],
+                "Version": "2012-10-17"
+            },
+            "Path": "/",
+			"ManagedPolicyArns": [
+				"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+				"arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+				"arn:aws:iam::610306858149:policy/Finexus-KMS-Standard-User"
+			]
+            }
+    },
+
+	"ContactDB": {
+		"Type" : "AWS::DynamoDB::Table",
+		"Properties" : {
+			"TableName" : "marketing-contact",
+			"AttributeDefinitions" : [
+				{
+					"AttributeName" : "email",
+					"AttributeType" : "S"   
+				},
+				{
+					"AttributeName" : "timestamp",
+					"AttributeType" : "N"
+				}
+			],
+			"KeySchema" : [
+				{
+					"AttributeName" : "email",
+					"KeyType" : "HASH"
+				},
+				{
+					"AttributeName" : "timestamp",
+					"KeyType" : "RANGE"
+				}
+			],
+			"ProvisionedThroughput" : {
+				"ReadCapacityUnits" : "5",
+				"WriteCapacityUnits" : "5"
+			}
+		}
+	},
+
+    "ProcessContactForm" : {
+      "Type" : "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "cryptokuma-marketing-io::Cryptokuma.Marketing.IO.Functions::ProcessContactFormAsync",
+        "Runtime": "dotnetcore1.0",
+        "CodeUri": "",
+		"Environment": {
+			"Variables": {
+				"FINEXUS_ACCESS_KEY": "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgEM6C1k2KAf7k1KIfpmywMyAAAAcjBwBgkqhkiG9w0BBwagYzBhAgEAMFwGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMrkbLThDmFx7zh/xcAgEQgC9/93GUYCHSj3hrU+nkdw+jnfr5+BpibPCYxeihwqgzDI1Jh1ePhu5v7zlkQHCUDQ==",
+				"FINEXUS_SECRET_ACCESS_KEY": "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgGLOVStPFxH7qs1YfkkZPrTAAAAhzCBhAYJKoZIhvcNAQcGoHcwdQIBADBwBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDKbZqjvJXlzsq1Zt/wIBEIBDP5qaTT4bZyNy0pxYlpsYYRg9JFouHJandobHuMV5xjX8P8aWhOEvldWC7tY0iptVRj1WTRCqpIeG4WZZP5Iw8k9JZQ=="
+			}
+		},
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": { "Fn::GetAtt" : [ "ProcessContactFormRole", "Arn" ] },
+		"VpcConfig" : {
+    		"SecurityGroupIds" : [ "sg-204ac752" ],
+    		"SubnetIds" : [ "subnet-def87cba" ]
+    	}
+      }
+    },
+
+	"SendConfirmation" : {
+      "Type" : "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "cryptokuma-marketing-io::Cryptokuma.Marketing.IO.Functions::SendConfirmation",
+        "Runtime": "dotnetcore1.0",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": null,
+        "Policies": [ "AWSLambdaBasicExecutionRole" ]
+      }
+    },
+
+	"API": {
+		"Type": "AWS::ApiGateway::RestApi",
+		"Properties": {
+            "Body": {
+                "basePath": "/v1",
+                "definitions": {},
+                "info": {
+                    "title": "cryptokuma-marketing-api",
+                    "version": "2017-07-04T12:43:23Z"
+                },
+                "paths": {
+                    "/contact": {
+                        "post": {
+							"produces": [ "text/plain" ],
+                            "responses": {
+                                "200": {
+                                    "description": "200 response",
+                                    "headers": {
+                                        "Access-Control-Allow-Origin": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "403": {
+                                    "description": "403 response",
+                                    "headers": {
+                                        "Access-Control-Allow-Origin": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "security": [
+                                {
+                                    "api_key": []
+                                }
+                            ],
+                            "x-amazon-apigateway-integration": {
+                                "contentHandling": "CONVERT_TO_TEXT",
+                                "credentials": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "ApiInvokeRole",
+                                                    "Arn"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "httpMethod": "POST",
+                                "passthroughBehavior": "never",
+                                "responses": {
+                                    "default": {
+                                        "responseParameters": {
+                                            "method.response.header.Access-Control-Allow-Origin": "'*'"
+                                        },
+                                        "statusCode": "200"
+                                    }
+                                },
+                                "type": "aws_proxy",
+                                "uri": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "ProcessContactForm",
+                                                    "Arn"
+                                                ]
+                                            },
+                                            "/invocations"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "x-amazon-apigateway-request-validator": "params-and-headers"
+                        },
+                        "options": {
+                            "consumes": [
+                                "application/json"
+                            ],
+                            "produces": [
+                                "application/json"
+                            ],
+                            "responses": {
+                                "200": {
+                                    "description": "200 response",
+                                    "headers": {
+                                        "Access-Control-Allow-Credentials": {
+                                            "type": "string"
+                                        },
+                                        "Access-Control-Allow-Headers": {
+                                            "type": "string"
+                                        },
+                                        "Access-Control-Allow-Methods": {
+                                            "type": "string"
+                                        },
+                                        "Access-Control-Allow-Origin": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "x-amazon-apigateway-integration": {
+                                "passthroughBehavior": "when_no_match",
+                                "requestTemplates": {
+                                    "application/json": "{\"statusCode\": 200}"
+                                },
+                                "responses": {
+                                    "default": {
+                                        "responseParameters": {
+                                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Access-Control-Allow-Origin,X-Auth-Token'",
+                                            "method.response.header.Access-Control-Allow-Methods": "'DELETE,GET,OPTIONS,PUT'",
+                                            "method.response.header.Access-Control-Allow-Origin": "'*'"
+                                        },
+                                        "statusCode": "200"
+                                    }
+                                },
+                                "type": "mock"
+                            }
+                        }
+                    }
+                },
+                "schemes": [
+                    "https"
+                ],
+                "securityDefinitions": {
+                    "api_key": {
+                        "in": "header",
+                        "name": "x-api-key",
+                        "type": "apiKey"
+                    }
+                },
+                "swagger": "2.0",
+                "x-amazon-apigateway-gateway-responses": {
+                    "DEFAULT_4XX": {
+                        "responseParameters": {
+                            "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Access-Control-Allow-Credentials,Access-Control-Allow-Origin,X-Auth-Token'",
+                            "gatewayresponse.header.Access-Control-Allow-Methods": "'DELETE,GET,OPTIONS,PUT'",
+                            "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+                        }
+                    }
+                },
+                "x-amazon-apigateway-request-validator": "full",
+                "x-amazon-apigateway-request-validators": {
+                    "body-only": {
+                        "validateRequestBody": true,
+                        "validateRequestHeaders": false,
+                        "validateRequestParameters": false
+                    },
+                    "full": {
+                        "validateRequestBody": true,
+                        "validateRequestHeaders": false,
+                        "validateRequestParameters": true
+                    },
+                    "params-and-headers": {
+                        "validateRequestBody": false,
+                        "validateRequestHeaders": false,
+                        "validateRequestParameters": true
+                    }
+                }
+            },
+			"Description": "CryptoKuma Marketing API",
+			"FailOnWarnings": true,
+			"Name": "cryptokuma-marketing"
+		}
+	}
+
+  },
+
+  "Outputs" : {
+  }
+}

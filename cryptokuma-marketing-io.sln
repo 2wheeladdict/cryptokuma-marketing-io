@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cryptokuma-marketing-io", "cryptokuma-marketing-io\cryptokuma-marketing-io.csproj", "{382559E7-5077-43F8-9616-7EDD1D18CA3B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cryptokuma-marketing-io.Tests", "cryptokuma-marketing.Tests\cryptokuma-marketing-io.Tests.csproj", "{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "finexus-aws-utilities", "..\finexus-aws-utilities\finexus-aws-utilities.csproj", "{CD161B62-2F9B-4185-9376-316049C8DE7B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{382559E7-5077-43F8-9616-7EDD1D18CA3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{382559E7-5077-43F8-9616-7EDD1D18CA3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{382559E7-5077-43F8-9616-7EDD1D18CA3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{382559E7-5077-43F8-9616-7EDD1D18CA3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAA5F602-76FB-4F9B-9BE8-975DD0D0E314}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6385FA53-BC95-4616-9951-7F281E6518DE}
+	EndGlobalSection
+EndGlobal
