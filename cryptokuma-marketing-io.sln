@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cryptokuma-marketing-io.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "finexus-aws-utilities", "..\finexus-aws-utilities\finexus-aws-utilities.csproj", "{CD161B62-2F9B-4185-9376-316049C8DE7B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cryptokuma-marketing-web", "..\cryptokuma-marketing-web\cryptokuma-marketing-web\cryptokuma-marketing-web.csproj", "{FAAA22AC-7969-4191-ACCA-33509A8828EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD161B62-2F9B-4185-9376-316049C8DE7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAAA22AC-7969-4191-ACCA-33509A8828EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAAA22AC-7969-4191-ACCA-33509A8828EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAAA22AC-7969-4191-ACCA-33509A8828EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAAA22AC-7969-4191-ACCA-33509A8828EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
