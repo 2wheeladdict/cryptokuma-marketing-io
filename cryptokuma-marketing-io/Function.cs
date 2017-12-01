@@ -113,6 +113,7 @@ namespace Cryptokuma.Marketing.IO
 
                         // invoke Lambda
                         var sendMessageResult = await lambdaClient.InvokeAsync(sendMessageRequest);
+
 #if DEBUG
                         // DEBUG Worker response
                         string sendMessageRawResult;
@@ -179,7 +180,7 @@ namespace Cryptokuma.Marketing.IO
                 throw ex;
 #else
                 // Lambda error response
-                return ApiGateway.GetResponseAsText(ex.Message, HttpStatusCode.BadRequest);
+                 return "ERROR";
 #endif
             }
         }
