@@ -23,6 +23,13 @@ using System.IO;
 
 namespace Cryptokuma.Marketing.IO
 {
+    public class ContactSubmitResult
+    {
+        public string Message { get; set; }
+        public string Email { get; set; }
+        public long CreatedAt { get; set; }
+    }
+
     public class Functions
     {
         private const string TAG = "FunctionHandler";
@@ -60,8 +67,15 @@ namespace Cryptokuma.Marketing.IO
                 // load AWS credentials
                 LoadConfig();
 
+                // check optional request param(s)
+                var noConfirm = false;
+                if (request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("noConfirm"))
+                {
+                    noConfirm = true;
+                }
+
                 // load environment variables
-                if (String.IsNullOrEmpty(SEND_CONFIRMATION_LAMBDA_NAME))
+                if (!noConfirm && String.IsNullOrEmpty(SEND_CONFIRMATION_LAMBDA_NAME))
                 {
                     var sendConfirmationLambda = System.Environment.GetEnvironmentVariable("SEND_CONFIRMATION_LAMBDA_NAME");
                     if (String.IsNullOrEmpty(sendConfirmationLambda))
@@ -72,7 +86,6 @@ namespace Cryptokuma.Marketing.IO
                     SEND_CONFIRMATION_LAMBDA_NAME = sendConfirmationLambda;
 
                     _logger.Debug($"SEND_CONFIRMATION_LAMBDA_NAME: {SEND_CONFIRMATION_LAMBDA_NAME}");
-
                 }
 
                 var contactRequest = JsonConvert.DeserializeObject<Contact>(request.Body);
@@ -83,6 +96,40 @@ namespace Cryptokuma.Marketing.IO
                     _logger.Log($"Initializing connection to DynamoDB Contact table");
                     Table ddbTable = Table.LoadTable(dynamoClient, "marketing-contact");
 
+                    // check for duplicate email, return NoContent response
+                    QueryFilter dupCheckerFilter = new QueryFilter("email", QueryOperator.Equal, contactRequest.Email);
+                    QueryOperationConfig dupCheckerConfig = new QueryOperationConfig()
+                    {
+                        Select = SelectValues.SpecificAttributes,
+                        AttributesToGet = new List<string> { "email", "timestamp" },
+                        ConsistentRead = true,
+                        Filter = dupCheckerFilter,
+                        Limit = 1,
+                        BackwardSearch = true
+                    };
+                    Search search = ddbTable.Query(dupCheckerConfig);
+                    var dupCheckResult = await search.GetNextSetAsync();
+
+                    if (dupCheckResult.Count > 0)
+                    {
+                        var contactItem = dupCheckResult.FirstOrDefault();
+
+                        if (contactItem == null)
+                        {
+                            return ApiGateway.GetResponseAsText("Not found", HttpStatusCode.BadRequest);
+                        }
+
+                        // init response payload
+                        var existingContactResult = new ContactSubmitResult
+                        {
+                            Message = "OK",
+                            CreatedAt = contactItem["timestamp"].AsLong(),
+                            Email = contactItem["email"]
+                        };
+
+                        return ApiGateway.GetResponseAsJson(existingContactResult, HttpStatusCode.NoContent);
+                    }
+
                     // init DynamoDB PUT
                     PutItemOperationConfig config = new PutItemOperationConfig
                     {
@@ -91,47 +138,61 @@ namespace Cryptokuma.Marketing.IO
 
                     // init DynamoDB row
                     var contactRow = new Document();
+                    var createdAt = DateHelpers.ToUnixTime(DateTime.UtcNow);
                     contactRow["email"] = contactRequest.Email;
-                    contactRow["timestamp"] = DateHelpers.ToUnixTime(DateTime.UtcNow);
+                    contactRow["timestamp"] = createdAt;
                     contactRow["firstname"] = contactRequest.FirstName;
                     contactRow["lastname"] = contactRequest.LastName;
                     contactRow["cookiestack"] = contactRequest.CookieStack;
+
+                    //TODO store "Interested" checkbox values
 
                     // insert row
                     var putResult = await ddbTable.PutItemAsync(contactRow, config);
 
                     // send email confirmation
-                    using (var lambdaClient = new AmazonLambdaClient(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
+                    if (!noConfirm)
                     {
-                        // init Lambda request
-                        var sendMessageRequest = new InvokeRequest()
+                        using (var lambdaClient = new AmazonLambdaClient(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
                         {
-                            FunctionName = SEND_CONFIRMATION_LAMBDA_NAME,
-                            InvocationType = InvocationType.Event,
-                            Payload = request.Body
-                        };
+                            // init Lambda request
+                            var sendMessageRequest = new InvokeRequest()
+                            {
+                                FunctionName = SEND_CONFIRMATION_LAMBDA_NAME,
+                                InvocationType = InvocationType.Event,
+                                Payload = request.Body
+                            };
 
-                        // invoke Lambda
-                        var sendMessageResult = await lambdaClient.InvokeAsync(sendMessageRequest);
+                            // invoke Lambda
+                            var sendMessageResult = await lambdaClient.InvokeAsync(sendMessageRequest);
 
 #if DEBUG
-                        // DEBUG Worker response
-                        string sendMessageRawResult;
-                        using (var sr = new StreamReader(sendMessageResult.Payload))
-                        {
-                            sendMessageRawResult = sr.ReadToEnd();
-                        }
+                            // DEBUG Worker response
+                            string sendMessageRawResult;
+                            using (var sr = new StreamReader(sendMessageResult.Payload))
+                            {
+                                sendMessageRawResult = sr.ReadToEnd();
+                            }
 #endif
-                        // get Worker response
-                        if (!sendMessageResult.HttpStatusCode.Equals(HttpStatusCode.Accepted))
-                        {
-                            _logger.Log($"ERROR: {sendMessageResult.FunctionError}");
+                            // get Worker response
+                            if (!sendMessageResult.HttpStatusCode.Equals(HttpStatusCode.Accepted))
+                            {
+                                _logger.Log($"ERROR: {sendMessageResult.FunctionError}");
 
-                            return ApiGateway.GetResponseAsText($"ERROR {contactRequest.Email}", HttpStatusCode.BadRequest);
+                                return ApiGateway.GetResponseAsText($"ERROR {contactRequest.Email}", HttpStatusCode.BadRequest);
+                            }
                         }
-
-                        return ApiGateway.GetResponseAsText($"OK {contactRequest.Email}", HttpStatusCode.OK);
                     }
+
+                    // init response payload
+                    var newContactResult = new ContactSubmitResult
+                    {
+                        Message = "OK",
+                        CreatedAt = createdAt,
+                        Email = contactRequest.Email
+                    };
+
+                    return ApiGateway.GetResponseAsJson(newContactResult, HttpStatusCode.OK);
                 }
             }
             catch (Exception ex)

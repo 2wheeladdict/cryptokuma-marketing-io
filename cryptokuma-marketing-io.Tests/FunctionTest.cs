@@ -30,6 +30,10 @@ namespace Cryptokuma.Marketing.IO.Tests
         [Fact]
         public void ProcessContactForm()
         {
+            // add optional noConfirm parameter to disable email confirmation
+            var queryParams = new Dictionary<string, string>();
+            queryParams.Add("noConfirm", "");
+
             // generate an API Gateway Request
             var request = new APIGatewayProxyRequest
             {
@@ -37,7 +41,7 @@ namespace Cryptokuma.Marketing.IO.Tests
                 Path = $"/contact",
                 HttpMethod = "POST",
                 Headers = null,
-                QueryStringParameters = { },
+                QueryStringParameters = queryParams,
                 PathParameters = { },
                 StageVariables = null,
                 RequestContext = { },
