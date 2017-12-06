@@ -155,6 +155,47 @@
       }
     },
 
+	"ProcessContactFormTimer": {
+        "Properties": {
+            "Description": "CryptoKuma scheduled task to keep Lambda function warm",
+            "ScheduleExpression": "rate(5 minutes)",
+            "State": "ENABLED",
+            "Targets": [
+                {
+                    "Arn": {
+                        "Fn::GetAtt": [
+                            "ProcessContactForm",
+                            "Arn"
+                        ]
+                    },
+                    "Id": "ProcessContactFormTarget",
+                    "Input": "{ \"Body\": {\"Name\":\"Joe UnitTest\",\"Email\":\"clay@mandarincreativegroup.com\"}, \"Headers\": null, \"HttpMethod\": \"POST\", \"IsBase64Encoded\": false, \"Path\": \"/contact\", \"PathParameters\": {}, \"QueryStringParameters\": {}, \"RequestContext\": {}, \"Resource\": \"/contact\", \"StageVariables\": null }"
+                }
+            ]
+        },
+        "Type": "AWS::Events::Rule"
+    },
+
+	"ProcessContactTimerPermissions": {
+        "Properties": {
+            "Action": "lambda:InvokeFunction",
+            "FunctionName": {
+                "Fn::GetAtt": [
+                    "ProcessContactForm",
+                    "Arn"
+                ]
+            },
+            "Principal": "events.amazonaws.com",
+            "SourceArn": {
+                "Fn::GetAtt": [
+                    "ProcessContactFormTimer",
+                    "Arn"
+                ]
+            }
+        },
+        "Type": "AWS::Lambda::Permission"
+    },
+
 	"SendConfirmation" : {
       "Type" : "AWS::Serverless::Function",
       "Properties": {
