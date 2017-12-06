@@ -72,7 +72,33 @@
 				"arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
 				"arn:aws:iam::610306858149:policy/Finexus-KMS-Standard-User"
 			]
-            }
+        }
+    },
+
+	"SendConfirmationRole": {
+		"Type": "AWS::IAM::Role",
+        "Properties": {
+			"AssumeRolePolicyDocument": {
+                "Statement": [
+                    {
+                        "Action": [
+                            "sts:AssumeRole"
+                        ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        }
+                    }
+                ],
+                "Version": "2012-10-17"
+            },
+            "Path": "/",
+			"ManagedPolicyArns": [
+				"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+				"arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+				"arn:aws:iam::610306858149:policy/Finexus-KMS-Standard-User"
+			]
+        }
     },
 
 	"ContactDB": {
@@ -139,12 +165,14 @@
 			"Variables": {
 				"CONTACT_FROM": "info@cryptokuma.com",
 				"CONFIRMATION_SUBJECT": "Thanks for your interest in CryptoKuma!",
-				"CONFIRMATION_MESSAGE": "We will be in touch soon."
+				"CONFIRMATION_MESSAGE": "We will be in touch soon.",
+				"FINEXUS_ACCESS_KEY": "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgEM6C1k2KAf7k1KIfpmywMyAAAAcjBwBgkqhkiG9w0BBwagYzBhAgEAMFwGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMrkbLThDmFx7zh/xcAgEQgC9/93GUYCHSj3hrU+nkdw+jnfr5+BpibPCYxeihwqgzDI1Jh1ePhu5v7zlkQHCUDQ==",
+				"FINEXUS_SECRET_ACCESS_KEY": "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgGLOVStPFxH7qs1YfkkZPrTAAAAhzCBhAYJKoZIhvcNAQcGoHcwdQIBADBwBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDKbZqjvJXlzsq1Zt/wIBEIBDP5qaTT4bZyNy0pxYlpsYYRg9JFouHJandobHuMV5xjX8P8aWhOEvldWC7tY0iptVRj1WTRCqpIeG4WZZP5Iw8k9JZQ=="
 			}
 		},
         "MemorySize": 256,
         "Timeout": 30,
-        "Role": null,
+        "Role": { "Fn::GetAtt" : [ "SendConfirmationRole", "Arn" ] },
         "Policies": [ "AWSLambdaBasicExecutionRole" ]
       }
     },
