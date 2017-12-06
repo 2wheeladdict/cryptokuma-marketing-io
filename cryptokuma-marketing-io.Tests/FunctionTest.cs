@@ -59,7 +59,7 @@ namespace Cryptokuma.Marketing.IO.Tests
             var contact = new Contact
             {
                 CookieStack = "Monster",
-                Email = "fcbenoit@gmail.com",
+                Email = "clay@mandarincreativegroup.com",
                 FirstName = "Clay",
                 LastName = "Bob"
             };

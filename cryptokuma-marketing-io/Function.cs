@@ -17,6 +17,8 @@ using Cryptokuma.Marketing.IO.Models;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
 using System.IO;
+using Amazon.S3;
+using Amazon.S3.Model;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -221,10 +223,33 @@ namespace Cryptokuma.Marketing.IO
 
             try
             {
+                // load AWS credentials
+                LoadConfig();
+
+                // load env vars
                 LoadConfirmationEnvironmentVars();
 
+                var messageTemplate = "";
+                using (var s3Client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
+                {
+                    var templateRequest = new GetObjectRequest
+                    {
+                        BucketName = "cryptokuma-marketing-templates",
+                        Key = "thankyou.html"
+                    };
+
+                    var templateResponse = await s3Client.GetObjectAsync(templateRequest);
+                    using (Stream responseStream = templateResponse.ResponseStream)
+                    {
+                        using (StreamReader reader = new StreamReader(responseStream))
+                        {
+                            messageTemplate = reader.ReadToEnd();
+                        }
+                    }
+                }
+
                 var mailGunApi = new MailGunApi();
-                var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMATION_SUBJECT, CONFIRMATION_MESSAGE);
+                var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMATION_SUBJECT, messageTemplate, true);
                 if (result.IsSuccessStatusCode)
                 {
                     return "OK";

@@ -21,7 +21,7 @@ namespace Cryptokuma.Marketing.IO
 
         }
 
-        public async Task<HttpResponseMessage> SendMail(Contact contact, string fromEmail, string subject, string message)
+        public async Task<HttpResponseMessage> SendMail(Contact contact, string fromEmail, string subject, string message, bool isHtml = false)
         {
             try
             {
@@ -32,7 +32,17 @@ namespace Cryptokuma.Marketing.IO
                     httpClient.BaseAddress = new Uri("https://api.mailgun.net");
                     httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {System.Convert.ToBase64String(apiKeyBytes)}");
 
-                    var queryString = $"from={fromEmail}&to={contact.Email}&subject={subject}!&text={message}";
+                    var queryString = $"from={fromEmail}&to={contact.Email}&subject={subject}";
+
+                    if (isHtml)
+                    {
+                        queryString += $"&html={message}";
+                    }
+                    else
+                    {
+                        queryString += $"&text={message}";
+                    }
+
                     var result = await httpClient.PostAsync($"v3/mg.cryptokuma.com/messages?{queryString}", new StringContent(""));
 
                     return result;
