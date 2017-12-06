@@ -61,6 +61,8 @@ namespace Cryptokuma.Marketing.IO
         {
             var logTag = "ProcessContactFormAsync";
             _logger.Log("BEGIN", logTag);
+            _logger.Log("FULL REQUEST", logTag);
+            _logger.Log(JsonConvert.SerializeObject(request));
 
             try
             {
@@ -122,12 +124,12 @@ namespace Cryptokuma.Marketing.IO
                         // init response payload
                         var existingContactResult = new ContactSubmitResult
                         {
-                            Message = "OK",
+                            Message = "EXISTS",
                             CreatedAt = contactItem["timestamp"].AsLong(),
                             Email = contactItem["email"]
                         };
 
-                        return ApiGateway.GetResponseAsJson(existingContactResult, HttpStatusCode.NoContent);
+                        return ApiGateway.GetResponseAsJson(existingContactResult, HttpStatusCode.OK);
                     }
 
                     // init DynamoDB PUT
@@ -143,9 +145,8 @@ namespace Cryptokuma.Marketing.IO
                     contactRow["timestamp"] = createdAt;
                     contactRow["firstname"] = contactRequest.FirstName;
                     contactRow["lastname"] = contactRequest.LastName;
+                    contactRow["interests"] = contactRequest.Interests;
                     contactRow["cookiestack"] = contactRequest.CookieStack;
-
-                    //TODO store "Interested" checkbox values
 
                     // insert row
                     var putResult = await ddbTable.PutItemAsync(contactRow, config);

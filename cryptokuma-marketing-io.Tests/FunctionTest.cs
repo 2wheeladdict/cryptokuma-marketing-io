@@ -45,7 +45,7 @@ namespace Cryptokuma.Marketing.IO.Tests
                 PathParameters = { },
                 StageVariables = null,
                 RequestContext = { },
-                Body = "{ \"FirstName\": \"Clay\", \"LastName\": \"Benoit\", \"Email\": \"clay@mandarincreativegroup.com\", \"CookieStack\": \"I am a cookie\" }",
+                Body = "{ \"FirstName\": \"Clay\", \"LastName\": \"Benoit\", \"Email\": \"clay@mandarincreativegroup.com\", \"CookieStack\": \"I am a cookie\", \"Interests\": \"[true,false,true,false,true]\" }",
                 IsBase64Encoded = false
             };
 
