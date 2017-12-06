@@ -148,7 +148,6 @@ namespace Cryptokuma.Marketing.IO
                     contactRow["name"] = contactRequest.Name;
                     contactRow["interests"] = contactRequest.Interests;
                     contactRow["confirmed"] = "false";  //TODO CL-50-13
-                    contactRow["cookiestack"] = contactRequest.CookieStack;
 
                     // insert row
                     var putResult = await ddbTable.PutItemAsync(contactRow, config);
