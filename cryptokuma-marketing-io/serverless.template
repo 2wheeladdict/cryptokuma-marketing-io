@@ -169,7 +169,7 @@
                         ]
                     },
                     "Id": "ProcessContactFormTarget",
-                    "Input": "{ \"Body\": {\"Name\":\"Joe UnitTest\",\"Email\":\"clay@mandarincreativegroup.com\"}, \"Headers\": null, \"HttpMethod\": \"POST\", \"IsBase64Encoded\": false, \"Path\": \"/contact\", \"PathParameters\": {}, \"QueryStringParameters\": {}, \"RequestContext\": {}, \"Resource\": \"/contact\", \"StageVariables\": null }"
+                    "Input": "{ \"Body\": null, \"Headers\": null, \"HttpMethod\": \"POST\", \"IsBase64Encoded\": false, \"Path\": \"/contact\", \"PathParameters\": {}, \"QueryStringParameters\": { \"warmer\": \"true\"}, \"RequestContext\": {}, \"Resource\": \"/contact\", \"StageVariables\": null }"
                 }
             ]
         },

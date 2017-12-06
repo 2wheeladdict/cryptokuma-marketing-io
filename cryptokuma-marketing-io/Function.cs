@@ -78,6 +78,13 @@ namespace Cryptokuma.Marketing.IO
                     noConfirm = true;
                 }
 
+                var isWarmer = false;
+                if (request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("warmer"))
+                {
+                    isWarmer = true;
+                    noConfirm = true;
+                }
+
                 // load environment variables
                 if (!noConfirm && String.IsNullOrEmpty(SEND_CONFIRMATION_LAMBDA_NAME))
                 {
@@ -92,12 +99,25 @@ namespace Cryptokuma.Marketing.IO
                     _logger.Debug($"SEND_CONFIRMATION_LAMBDA_NAME: {SEND_CONFIRMATION_LAMBDA_NAME}");
                 }
 
-                var contactRequest = JsonConvert.DeserializeObject<Contact>(request.Body);
+                Contact contactRequest;
+
+                if (isWarmer)
+                {
+                    contactRequest = new Contact
+                    {
+                        Email = "lambda-warmer@cryptokuma.com",
+                        Interests = "[]",
+                        Name = "Lambda Warmer"
+                    };
+                }
+                else
+                {
+                    contactRequest = JsonConvert.DeserializeObject<Contact>(request.Body);
+                }
 
                 using (var dynamoClient = new AmazonDynamoDBClient(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
                 {
                     // init connection to DynamoDB table
-                    _logger.Log($"Initializing connection to DynamoDB Contact table");
                     Table ddbTable = Table.LoadTable(dynamoClient, "marketing-contact");
 
                     // check for duplicate email, return NoContent response
@@ -112,6 +132,7 @@ namespace Cryptokuma.Marketing.IO
                         BackwardSearch = true
                     };
                     Search search = ddbTable.Query(dupCheckerConfig);
+
                     var dupCheckResult = await search.GetNextSetAsync();
 
                     if (dupCheckResult.Count > 0)
