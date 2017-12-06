@@ -145,8 +145,7 @@ namespace Cryptokuma.Marketing.IO
                     var createdAt = DateHelpers.ToUnixTime(DateTime.UtcNow);
                     contactRow["email"] = contactRequest.Email;
                     contactRow["timestamp"] = createdAt;
-                    contactRow["firstname"] = contactRequest.FirstName;
-                    contactRow["lastname"] = contactRequest.LastName;
+                    contactRow["name"] = contactRequest.Name;
                     contactRow["interests"] = contactRequest.Interests;
                     contactRow["cookiestack"] = contactRequest.CookieStack;
 

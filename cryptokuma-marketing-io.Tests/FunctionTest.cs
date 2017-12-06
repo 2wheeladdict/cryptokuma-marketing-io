@@ -45,7 +45,7 @@ namespace Cryptokuma.Marketing.IO.Tests
                 PathParameters = { },
                 StageVariables = null,
                 RequestContext = { },
-                Body = "{ \"FirstName\": \"Clay\", \"LastName\": \"Benoit\", \"Email\": \"clay@mandarincreativegroup.com\", \"CookieStack\": \"I am a cookie\", \"Interests\": \"[true,false,true,false,true]\" }",
+                Body = "{ \"Name\": \"Joe UnitTest\", \"Email\": \"joebob@unittest.com\", \"CookieStack\": \"I am a cookie\", \"Interests\": \"[true,false,true,false,true]\" }",
                 IsBase64Encoded = false
             };
 
@@ -60,8 +60,7 @@ namespace Cryptokuma.Marketing.IO.Tests
             {
                 CookieStack = "Monster",
                 Email = "clay@mandarincreativegroup.com",
-                FirstName = "Clay",
-                LastName = "Bob"
+                Name = "Joe UnitTest"
             };
 
             var response = _lambda.SendConfirmationAsync(contact).Result;
