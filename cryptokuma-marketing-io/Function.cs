@@ -147,6 +147,7 @@ namespace Cryptokuma.Marketing.IO
                     contactRow["timestamp"] = createdAt;
                     contactRow["name"] = contactRequest.Name;
                     contactRow["interests"] = contactRequest.Interests;
+                    contactRow["confirmed"] = "false";  //TODO CL-50-13
                     contactRow["cookiestack"] = contactRequest.CookieStack;
 
                     // insert row
@@ -234,7 +235,7 @@ namespace Cryptokuma.Marketing.IO
                     var templateRequest = new GetObjectRequest
                     {
                         BucketName = "cryptokuma-marketing-templates",
-                        Key = "thankyou.html"
+                        Key = "confirmation.html"
                     };
 
                     var templateResponse = await s3Client.GetObjectAsync(templateRequest);
