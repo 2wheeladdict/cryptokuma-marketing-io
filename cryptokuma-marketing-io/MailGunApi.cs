@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using System.Net.Http.Headers;
 
 namespace Cryptokuma.Marketing.IO
 {
@@ -28,7 +29,6 @@ namespace Cryptokuma.Marketing.IO
                 using (var httpClient = new HttpClient())
                 {
                     var apiKeyBytes = System.Text.Encoding.UTF8.GetBytes("api:key-3e12e822df5da30736e6ff6fdcdcf510");
-
                     httpClient.BaseAddress = new Uri("https://api.mailgun.net");
                     httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {System.Convert.ToBase64String(apiKeyBytes)}");
 
