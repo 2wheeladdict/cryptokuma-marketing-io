@@ -255,7 +255,7 @@ namespace Cryptokuma.Marketing.IO
                     var templateRequest = new GetObjectRequest
                     {
                         BucketName = "cryptokuma-marketing-templates",
-                        Key = "confirmation.html"
+                        Key = "thankyou.html"
                     };
 
                     var templateResponse = await s3Client.GetObjectAsync(templateRequest);
