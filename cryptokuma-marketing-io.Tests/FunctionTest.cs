@@ -60,10 +60,9 @@ namespace Cryptokuma.Marketing.IO.Tests
         [Fact]
         public void ConfirmEmail()
         {
-            var emailCipher = "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgG5TtiGQ3z6NeLXofUXkYcsAAAAfDB6BgkqhkiG9w0BBwagbTBrAgEAMGYGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMMMjUfULwxt3pN3X6AgEQgDnMNRZuj/byDuzWD1Wo4vVUQqmdTzNKKm8u/Uio93Xpjkp67B6UNqewRaNyJO/54yGjXdzDqfBO6sk=";
-            var emailCipherBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailCipher));
+            var emailId = "UVZGSlEwRklhbHB1VHk5MFVFMHZWMWRNUjNCTFNXOTROMWRETUhaTFpsZHRkVmhMZEdWVGQyUjJXVXhzYWpNd1JtZEhTR2hKTUVkUVFqbHlOelF3YlRsTldHaHlPVmxpUVVGQlFXWkVRalpDWjJ0eGFHdHBSemwzTUVKQ2QyRm5ZbFJDY2tGblJVRk5SMWxIUTFOeFIxTkpZak5FVVVWSVFWUkJaVUpuYkdkb2EyZENXbEZOUlVGVE5IZEZVVkZOZEZaVFJFMTRlbHBQYmxOb1JrMHdkRUZuUlZGblJHNTNTVTFqTlV0ME5YRlplRTFZU0ZkMGNuWlRUbTVRYkhKNFIxSmxZemxxVmxsQ1VuRjZRMlZKTm5OcE1VNVFja2RzVkN0a2FFWnlkSFZWYkcxTmMxQmpZMWRtZGpkMWNrWkpVak52UFE9PQ";
             var pathParams = new Dictionary<string, string>();
-            pathParams.Add("id", emailCipherBase64);
+            pathParams.Add("id", emailId);
 
             // add optional noConfirm parameter to disable email confirmation
             var queryParams = new Dictionary<string, string>();

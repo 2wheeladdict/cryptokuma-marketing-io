@@ -19,7 +19,7 @@ using Amazon.Lambda.Model;
 using System.IO;
 using Amazon.S3;
 using Amazon.S3.Model;
-using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -288,7 +288,7 @@ namespace Cryptokuma.Marketing.IO
                     // substitute template vars: 
                     //  - _NAME_
                     //  - _EMAILCIPHER_
-                    messageTemplate = messageTemplate.Replace("_NAME_", contact.Name).Replace("_EMAILCIPHER_", emailCipherBase64);
+                    messageTemplate = messageTemplate.Replace("_NAME_", contact.Name).Replace("_EMAILCIPHER_", Base64UrlEncoder.Encode(emailCipherBase64));
 
                     var mailGunApi = new MailGunApi();
                     var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMATION_SUBJECT, messageTemplate, true);
@@ -360,9 +360,11 @@ namespace Cryptokuma.Marketing.IO
                 }
 
                 // decrypt Email Ciphertext
-                byte[] cipherBytes = Convert.FromBase64String(id);
+                byte[] cipherBytes = Convert.FromBase64String(Base64UrlEncoder.Decode(id));
                 var emailCipher = System.Text.Encoding.UTF8.GetString(cipherBytes);
                 var emailPlainText = await KMS.DecryptString(emailCipher, _awsAccessKey, _awsSecretKey, REGION);
+                _logger.Log(" => Got email");
+                _logger.Log(emailPlainText);
 
                 // update DynamoDB confirmed flag
                 using (var dynamoClient = new AmazonDynamoDBClient(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
@@ -442,7 +444,7 @@ namespace Cryptokuma.Marketing.IO
                             {
                                 FunctionName = SEND_CONFIRMED_LAMBDA_NAME,
                                 InvocationType = InvocationType.Event,
-                                Payload = request.Body
+                                Payload = JsonConvert.SerializeObject(contactRequest)
                             };
 
                             // invoke Lambda
@@ -451,7 +453,7 @@ namespace Cryptokuma.Marketing.IO
                             _logger.Debug(sendMessageResult);
 #else
                             var sendMessageResult = await lambdaClient.InvokeAsync(sendMessageRequest);
-                                                        // get Worker response
+                            // get Worker response
                             if (!sendMessageResult.HttpStatusCode.Equals(HttpStatusCode.Accepted))
                             {
                                 _logger.Log($"ERROR: {sendMessageResult.FunctionError}");
@@ -538,6 +540,7 @@ namespace Cryptokuma.Marketing.IO
 
                 var mailGunApi = new MailGunApi();
                 var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMED_SUBJECT, messageTemplate, true);
+
                 if (result.IsSuccessStatusCode)
                 {
                     return "OK";
