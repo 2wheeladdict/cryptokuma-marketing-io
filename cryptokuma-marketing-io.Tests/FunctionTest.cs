@@ -29,6 +29,7 @@ namespace Cryptokuma.Marketing.IO.Tests
             System.Environment.SetEnvironmentVariable("CONTACT_TABLE", "marketing-contact-dev");
             System.Environment.SetEnvironmentVariable("SEND_CONFIRMATION_LAMBDA_NAME", "DUMMY");
             System.Environment.SetEnvironmentVariable("SEND_CONFIRMED_LAMBDA_NAME", "DUMMY");
+            System.Environment.SetEnvironmentVariable("BASE_URL", "https://dev.cryptokuma.com");
         }
 
         [Fact]
@@ -60,7 +61,7 @@ namespace Cryptokuma.Marketing.IO.Tests
         [Fact]
         public void ConfirmEmail()
         {
-            var emailId = "UVZGSlEwRklhbHB1VHk5MFVFMHZWMWRNUjNCTFNXOTROMWRETUhaTFpsZHRkVmhMZEdWVGQyUjJXVXhzYWpNd1JtZEhTR2hKTUVkUVFqbHlOelF3YlRsTldHaHlPVmxpUVVGQlFXWkVRalpDWjJ0eGFHdHBSemwzTUVKQ2QyRm5ZbFJDY2tGblJVRk5SMWxIUTFOeFIxTkpZak5FVVVWSVFWUkJaVUpuYkdkb2EyZENXbEZOUlVGVE5IZEZVVkZOZEZaVFJFMTRlbHBQYmxOb1JrMHdkRUZuUlZGblJHNTNTVTFqTlV0ME5YRlplRTFZU0ZkMGNuWlRUbTVRYkhKNFIxSmxZemxxVmxsQ1VuRjZRMlZKTm5OcE1VNVFja2RzVkN0a2FFWnlkSFZWYkcxTmMxQmpZMWRtZGpkMWNrWkpVak52UFE9PQ";
+            var emailId = "UVZGSlEwRklhbHB1VHk5MFVFMHZWMWRNUjNCTFNXOTROMWRETUhaTFpsZHRkVmhMZEdWVGQyUjJXVXhzYWpNd1JtZElTbGdyZFVWR05rOUNVV1pHUVU5d1FrbFFjbUZYUVVGQlFXWkVRalpDWjJ0eGFHdHBSemwzTUVKQ2QyRm5ZbFJDY2tGblJVRk5SMWxIUTFOeFIxTkpZak5FVVVWSVFWUkJaVUpuYkdkb2EyZENXbEZOUlVGVE5IZEZVVkZOU25rd1JrZDRRVTlWZDA5VmJEVm1Na0ZuUlZGblJHdGtXbnBUUzFoS1ZFOXNhRU40UW1aRWVUQkNNVnByY21wSmRHUlRkbGtyTTNRMlZWcGFSRUpzUm5BMFJ6aGpUSGxWT0hWWU5HMUxNR1UyTm1wdEwwWXZNMFpEVldFd05IYzRUa1pOUFE9PQ";
             var pathParams = new Dictionary<string, string>();
             pathParams.Add("id", emailId);
 

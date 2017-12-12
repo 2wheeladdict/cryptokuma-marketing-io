@@ -48,6 +48,7 @@ namespace Cryptokuma.Marketing.IO
         private string CONFIRMATION_SUBJECT = "";
         private string CONFIRMED_SUBJECT = "";
         private string CONTACT_TABLE = "";
+        private string BASE_URL = "";
 
         /// <summary>
         /// Default constructor that Lambda will invoke.
@@ -169,7 +170,7 @@ namespace Cryptokuma.Marketing.IO
                     contactRow["timestamp"] = createdAt;
                     contactRow["name"] = contactRequest.Name;
                     contactRow["interests"] = contactRequest.Interests;
-                    contactRow["confirmed"] = "false";  //TODO CL-50-13
+                    contactRow["confirmed"] = "false";
                     contactRow["updatedAt"] = createdAt;
 
                     // insert row
@@ -261,6 +262,7 @@ namespace Cryptokuma.Marketing.IO
                     _logger.Debug($"CONFIRMATION_SUBJECT: {CONFIRMATION_SUBJECT}");
                 }
 
+                // load Confirmation template from S3
                 var messageTemplate = "";
                 using (var s3Client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
                 {
@@ -282,14 +284,16 @@ namespace Cryptokuma.Marketing.IO
 
                 if (!String.IsNullOrEmpty(messageTemplate))
                 {
+                    // generate Email ciphertext based upon email address, then base64 encode it
                     var emailCipher = await KMS.EncryptStringAsync(contact.Email, _awsAccessKey, _awsSecretKey, REGION);
                     var emailCipherBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailCipher));
-
                     // substitute template vars: 
                     //  - _NAME_
                     //  - _EMAILCIPHER_
-                    messageTemplate = messageTemplate.Replace("_NAME_", contact.Name).Replace("_EMAILCIPHER_", Base64UrlEncoder.Encode(emailCipherBase64));
+                    //  - _BASEURL_
+                    messageTemplate = messageTemplate.Replace("_BASEURL_", BASE_URL).Replace("_NAME_", contact.Name).Replace("_EMAILCIPHER_", Base64UrlEncoder.Encode(emailCipherBase64));
 
+                    // send confirmation email
                     var mailGunApi = new MailGunApi();
                     var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMATION_SUBJECT, messageTemplate, true);
                     if (result.IsSuccessStatusCode)
@@ -353,7 +357,6 @@ namespace Cryptokuma.Marketing.IO
                     noConfirm = true;
                 }
 
-                var isWarmer = false;
                 if (request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey("warmer"))
                 {
                     return ApiGateway.GetResponseAsJson("WARMED", HttpStatusCode.OK);
@@ -372,7 +375,7 @@ namespace Cryptokuma.Marketing.IO
                     // init connection to DynamoDB table
                     Table ddbTable = Table.LoadTable(dynamoClient, CONTACT_TABLE);
 
-                    // check for duplicate email, return NoContent response
+                    // find matching row in DDB
                     QueryFilter queryFilter = new QueryFilter("email", QueryOperator.Equal, emailPlainText);
                     QueryOperationConfig queryConfig = new QueryOperationConfig()
                     {
@@ -407,11 +410,11 @@ namespace Cryptokuma.Marketing.IO
                         ReturnValues = ReturnValues.AllOldAttributes
                     };
 
-                    // init DynamoDB row
+                    // init DynamoDB row; DEV: must set all values or they will be overwritten with null values
                     var contactRow = new Document();
                     var updatedAt = DateHelpers.ToUnixTime(DateTime.UtcNow);
                     contactRow["email"] = contactRequest.Email;
-                    contactRow["timestamp"] = contactItem["timestamp"]; // this really is CreatedAt
+                    contactRow["timestamp"] = contactItem["timestamp"];     //DEV this really is CreatedAt
                     contactRow["name"] = contactRequest.Name;
                     contactRow["interests"] = contactRequest.Interests;
                     contactRow["confirmed"] = "true";
@@ -437,6 +440,7 @@ namespace Cryptokuma.Marketing.IO
                             _logger.Debug($"SEND_CONFIRMED_LAMBDA_NAME: {SEND_CONFIRMED_LAMBDA_NAME}");
                         }
 
+                        // invoke Lambda to send Confirmed email
                         using (var lambdaClient = new AmazonLambdaClient(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
                         {
                             // init Lambda request
@@ -519,13 +523,14 @@ namespace Cryptokuma.Marketing.IO
                     _logger.Debug($"CONFIRMED_SUBJECT: {CONFIRMED_SUBJECT}");
                 }
 
+                // load Confirmed email template from S3
                 var messageTemplate = "";
                 using (var s3Client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, RegionEndpoint.GetBySystemName(REGION)))
                 {
                     var templateRequest = new GetObjectRequest
                     {
                         BucketName = "cryptokuma-marketing-templates",
-                        Key = "confirmed.html"
+                        Key = "confirmed.min.html"
                     };
 
                     var templateResponse = await s3Client.GetObjectAsync(templateRequest);
@@ -538,6 +543,13 @@ namespace Cryptokuma.Marketing.IO
                     }
                 }
 
+                // substitute template vars: 
+                //  - _NAME_
+                //  - _EMAILCIPHER_
+                //  - _BASEURL_
+                messageTemplate = messageTemplate.Replace("_BASEURL_", BASE_URL).Replace("_NAME_", contact.Name);
+
+                // send email
                 var mailGunApi = new MailGunApi();
                 var result = await mailGunApi.SendMail(contact, CONTACT_FROM, CONFIRMED_SUBJECT, messageTemplate, true);
 
@@ -599,6 +611,19 @@ namespace Cryptokuma.Marketing.IO
                 CONTACT_FROM = contactFrom;
 
                 _logger.Debug($"CONTACT_FROM: {CONTACT_FROM}");
+            }
+
+            if (String.IsNullOrEmpty(BASE_URL))
+            {
+                var baseUrl = System.Environment.GetEnvironmentVariable("BASE_URL");
+                if (String.IsNullOrEmpty(baseUrl))
+                {
+                    throw new NullReferenceException("BASE_URL environment variable is not defined");
+                }
+
+                BASE_URL = baseUrl;
+
+                _logger.Debug($"BASE_URL: {BASE_URL}");
             }
         }
 

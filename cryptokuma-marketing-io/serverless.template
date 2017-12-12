@@ -22,6 +22,10 @@
 	"SecretKeyCipher": {
 		"Type": "String",
 		"Default": "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgGLOVStPFxH7qs1YfkkZPrTAAAAhzCBhAYJKoZIhvcNAQcGoHcwdQIBADBwBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDKbZqjvJXlzsq1Zt/wIBEIBDP5qaTT4bZyNy0pxYlpsYYRg9JFouHJandobHuMV5xjX8P8aWhOEvldWC7tY0iptVRj1WTRCqpIeG4WZZP5Iw8k9JZQ=="
+	},
+	"BaseUrl": {
+		"Type": "String",
+		"Default": "https://dev.cryptokuma.com"
 	}
    },
   "Resources" : {
@@ -226,6 +230,7 @@
         "CodeUri": "",
 		"Environment": {
 			"Variables": {
+				"BASE_URL": { "Ref": "BaseUrl" },
 				"CONTACT_FROM": "info@cryptokuma.com",
 				"CONTACT_TABLE": { "Ref": "ContactTable" },
 				"CONFIRMATION_SUBJECT": "Please confirm your email address for CryptoKuma!",
@@ -272,6 +277,7 @@
         "CodeUri": "",
 		"Environment": {
 			"Variables": {
+				"BASE_URL": { "Ref": "BaseUrl" },
 				"CONTACT_FROM": "info@cryptokuma.com",
 				"CONFIRMED_SUBJECT": "Confirmed.  Thanks for your interest in CryptoKuma!",
 				"FINEXUS_ACCESS_KEY": "AQICAHjZnO/tPM/WWLGpKIox7WC0vKfWmuXKteSwdvYLlj30FgEM6C1k2KAf7k1KIfpmywMyAAAAcjBwBgkqhkiG9w0BBwagYzBhAgEAMFwGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMrkbLThDmFx7zh/xcAgEQgC9/93GUYCHSj3hrU+nkdw+jnfr5+BpibPCYxeihwqgzDI1Jh1ePhu5v7zlkQHCUDQ==",
