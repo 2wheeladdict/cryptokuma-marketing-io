@@ -19,7 +19,7 @@ using Amazon.Lambda.Model;
 using System.IO;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Microsoft.IdentityModel.Tokens;
+using Cryptokuma.Marketing.IO.Utilities;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -286,12 +286,15 @@ namespace Cryptokuma.Marketing.IO
                 {
                     // generate Email ciphertext based upon email address, then base64 encode it
                     var emailCipher = await KMS.EncryptStringAsync(contact.Email, _awsAccessKey, _awsSecretKey, REGION);
-                    var emailCipherBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailCipher));
+                    // poor man's Base64UrlEncoder.Encode (since Lambda dotnetcore version is still behind the rest of the world)
+                    //var emailCipherBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailCipher));
+                    string emailCipherBase64 = Base64UrlEncoder.Encode(emailCipher);
+
                     // substitute template vars: 
                     //  - _NAME_
                     //  - _EMAILCIPHER_
                     //  - _BASEURL_
-                    messageTemplate = messageTemplate.Replace("_BASEURL_", BASE_URL).Replace("_NAME_", contact.Name).Replace("_EMAILCIPHER_", Base64UrlEncoder.Encode(emailCipherBase64));
+                    messageTemplate = messageTemplate.Replace("_BASEURL_", BASE_URL).Replace("_NAME_", contact.Name).Replace("_EMAILCIPHER_", (emailCipherBase64));
 
                     // send confirmation email
                     var mailGunApi = new MailGunApi();
@@ -363,8 +366,7 @@ namespace Cryptokuma.Marketing.IO
                 }
 
                 // decrypt Email Ciphertext
-                byte[] cipherBytes = Convert.FromBase64String(Base64UrlEncoder.Decode(id));
-                var emailCipher = System.Text.Encoding.UTF8.GetString(cipherBytes);
+                var emailCipher = Base64UrlEncoder.Decode(id);
                 var emailPlainText = await KMS.DecryptString(emailCipher, _awsAccessKey, _awsSecretKey, REGION);
                 _logger.Log(" => Got email");
                 _logger.Log(emailPlainText);

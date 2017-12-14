@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp1.0</TargetFramework>
     <RootNamespace>Cryptokuma.Marketing.IO.Tests</RootNamespace>
+    <OutputType>exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
