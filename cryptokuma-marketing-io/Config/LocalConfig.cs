@@ -15,11 +15,10 @@ namespace Finexus.IO.Config
     {
         private ImmutableCredentials _credentials;
         private const string TAG = "Finexus.IO.Config.LocalConfig";
-        private static Logger _logger = new Logger(TAG);
 
         public LocalConfig()
         {
-            _logger.Log("LocalConfig::ctor:");
+            Console.WriteLine("LocalConfig::ctor:");
 
             var chain = new CredentialProfileStoreChain();
             AWSCredentials awsCredentials;

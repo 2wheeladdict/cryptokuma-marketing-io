@@ -11,7 +11,6 @@ using Finexus.IO.Utilities;
 using Amazon.DynamoDBv2;
 using Amazon;
 using Finexus.IO.Config;
-using Finexus.Aws.Utilities;
 using Amazon.DynamoDBv2.DocumentModel;
 using Cryptokuma.Marketing.IO.Models;
 using Amazon.Lambda;
@@ -36,7 +35,6 @@ namespace Cryptokuma.Marketing.IO
     public class Functions
     {
         private const string TAG = "FunctionHandler";
-        private Logger _logger = new Logger(TAG);
 
         private string _awsAccessKey;
         private string _awsSecretKey;
@@ -66,6 +64,9 @@ namespace Cryptokuma.Marketing.IO
         public async Task<APIGatewayProxyResponse> ProcessContactFormAsync(APIGatewayProxyRequest request, ILambdaContext context)
         {
             var logTag = "ProcessContactFormAsync";
+            Console.WriteLine("BEGIN", logTag);
+            Console.WriteLine("FULL REQUEST", logTag);
+            Console.WriteLine(JsonConvert.SerializeObject(request));
 
             try
             {
@@ -97,8 +98,6 @@ namespace Cryptokuma.Marketing.IO
                     }
 
                     SEND_CONFIRMATION_LAMBDA_NAME = sendConfirmationLambda;
-
-                    _logger.Debug($"SEND_CONFIRMATION_LAMBDA_NAME: {SEND_CONFIRMATION_LAMBDA_NAME}");
                 }
 
                 Contact contactRequest;
@@ -199,7 +198,7 @@ namespace Cryptokuma.Marketing.IO
                             // get Worker response
                             if (!sendMessageResult.HttpStatusCode.Equals(HttpStatusCode.Accepted))
                             {
-                                _logger.Log($"ERROR: {sendMessageResult.FunctionError}");
+                                Console.WriteLine($"ERROR: {sendMessageResult.FunctionError}");
 
                                 return ApiGateway.GetResponseAsText($"ERROR {contactRequest.Email}", HttpStatusCode.BadRequest);
                             }
@@ -239,7 +238,7 @@ namespace Cryptokuma.Marketing.IO
         public async Task<string> SendConfirmationAsync(Contact contact)
         {
             var logTag = "SendConfirmation";
-            _logger.Log("BEGIN", logTag);
+            Console.WriteLine("BEGIN", logTag);
 
             try
             {
@@ -611,8 +610,6 @@ namespace Cryptokuma.Marketing.IO
                 }
 
                 CONTACT_FROM = contactFrom;
-
-                _logger.Debug($"CONTACT_FROM: {CONTACT_FROM}");
             }
 
             if (String.IsNullOrEmpty(BASE_URL))
@@ -623,9 +620,18 @@ namespace Cryptokuma.Marketing.IO
                     throw new NullReferenceException("BASE_URL environment variable is not defined");
                 }
 
-                BASE_URL = baseUrl;
+                CONFIRMATION_SUBJECT = confirmSubject;
+            }
 
-                _logger.Debug($"BASE_URL: {BASE_URL}");
+            if (String.IsNullOrEmpty(CONFIRMATION_MESSAGE))
+            {
+                var confirmMessage = System.Environment.GetEnvironmentVariable("CONFIRMATION_MESSAGE");
+                if (String.IsNullOrEmpty(confirmMessage))
+                {
+                    throw new NullReferenceException("CONFIRMATION_MESSAGE environment variable is not defined");
+                }
+
+                CONFIRMATION_MESSAGE = confirmMessage;
             }
         }
 
@@ -635,7 +641,7 @@ namespace Cryptokuma.Marketing.IO
         /// <param name="config"></param>
         private void LoadConfig()
         {
-            _logger.Log("LoadConfig::");
+            Console.WriteLine("LoadConfig::");
 
             IAwsConfigurationReader config;
 
@@ -647,24 +653,23 @@ namespace Cryptokuma.Marketing.IO
                 config = new ServerConfig();
 #endif
 
-            _logger.Debug("LoadConfig::");
             _awsAccessKey = config.AccessKey;
             _awsSecretKey = config.SecretKey;
         }
 
         public void LogErrorDetails(string messageHeader, Exception ex)
         {
-            _logger.Log(messageHeader);
-            _logger.Log(ex.Message);
+            Console.WriteLine(messageHeader);
+            Console.WriteLine(ex.Message);
 
             if (ex.InnerException != null && !String.IsNullOrEmpty(ex.InnerException.Message))
             {
-                _logger.Log(ex.InnerException.Message);
+                Console.WriteLine(ex.InnerException.Message);
             }
 
             if (!String.IsNullOrEmpty(ex.StackTrace))
             {
-                _logger.Log(ex.StackTrace);
+                Console.WriteLine(ex.StackTrace);
             }
         }
     }

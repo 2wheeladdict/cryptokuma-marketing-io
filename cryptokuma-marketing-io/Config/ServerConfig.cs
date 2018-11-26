@@ -11,11 +11,10 @@ namespace Finexus.IO.Config
     public class ServerConfig : IAwsConfigurationReader
     {
         private const string TAG = "Finexus.IO.Config.LocalConfig";
-        private static Logger _logger = new Logger(TAG);
 
         public ServerConfig()
         {
-            _logger.Log("ServerConfig::ctor:");
+            Console.WriteLine("ServerConfig::ctor:");
         }
 
         public string AccessKey => KMS.DecryptEnvironmentVariable("FINEXUS_ACCESS_KEY").Result;
